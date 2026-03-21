@@ -80,7 +80,23 @@ router.post("/tts/generate", async (req, res) => {
     if (!response.ok) {
       const errorText = await response.text();
       req.log.error({ status: response.status, body: errorText }, "ElevenLabs TTS error");
-      res.status(500).json({ error: "Failed to generate speech. Please check your ElevenLabs API key permissions." });
+
+      let userMessage = "Failed to generate speech. Please try again.";
+      try {
+        const errJson = JSON.parse(errorText);
+        const code = errJson?.detail?.code ?? "";
+        if (code === "paid_plan_required" || response.status === 402) {
+          userMessage = "Free accounts cannot use library voices via the API. Please use a voice you own — paste its Voice ID from your ElevenLabs dashboard.";
+        } else if (response.status === 401) {
+          userMessage = "Invalid or missing ElevenLabs API key. Please check your key in Replit Secrets.";
+        } else if (errJson?.detail?.message) {
+          userMessage = errJson.detail.message;
+        }
+      } catch {
+        // keep default message
+      }
+
+      res.status(500).json({ error: userMessage });
       return;
     }
 
