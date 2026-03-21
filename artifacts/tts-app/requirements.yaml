@@ -1,0 +1,13 @@
+packages:
+  "framer-motion": "For smooth entry animations and interactive element transitions"
+  "clsx": "Utility for constructing className strings conditionally"
+  "tailwind-merge": "Utility function to efficiently merge Tailwind CSS classes"
+
+images:
+  - path: "artifacts/tts-app/public/images/abstract-waves.png"
+    description: "Minimalist abstract 3D sound waves in soft blue and silver gradients on a transparent background, professional and clean"
+    aspect_ratio: "16:9"
+
+notes:
+  - using standard fetch for /api/tts/generate to handle the binary audio/mpeg blob
+  - using @workspace/api-client-react for the GET voices endpoint

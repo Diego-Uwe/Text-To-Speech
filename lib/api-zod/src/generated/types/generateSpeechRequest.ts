@@ -5,19 +5,6 @@
  * API specification
  * OpenAPI spec version: 0.1.0
  */
-export interface HealthStatus {
-  status: string;
-}
-
-export interface Voice {
-  voice_id: string;
-  name: string;
-  category: string;
-}
-
-export interface VoicesResponse {
-  voices: Voice[];
-}
 
 export interface GenerateSpeechRequest {
   /**
@@ -27,8 +14,4 @@ export interface GenerateSpeechRequest {
   text: string;
   voice_id: string;
   model_id?: string;
-}
-
-export interface ErrorResponse {
-  error: string;
 }

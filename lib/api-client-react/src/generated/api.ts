@@ -5,18 +5,26 @@
  * API specification
  * OpenAPI spec version: 0.1.0
  */
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import type {
+  MutationFunction,
   QueryFunction,
   QueryKey,
+  UseMutationOptions,
+  UseMutationResult,
   UseQueryOptions,
   UseQueryResult,
 } from "@tanstack/react-query";
 
-import type { HealthStatus } from "./api.schemas";
+import type {
+  ErrorResponse,
+  GenerateSpeechRequest,
+  HealthStatus,
+  VoicesResponse,
+} from "./api.schemas";
 
 import { customFetch } from "../custom-fetch";
-import type { ErrorType } from "../custom-fetch";
+import type { ErrorType, BodyType } from "../custom-fetch";
 
 type AwaitedInput<T> = PromiseLike<T> | T;
 
@@ -99,3 +107,158 @@ export function useHealthCheck<
 
   return { ...query, queryKey: queryOptions.queryKey };
 }
+
+/**
+ * Returns list of available ElevenLabs voices
+ * @summary Get available voices
+ */
+export const getGetVoicesUrl = () => {
+  return `/api/tts/voices`;
+};
+
+export const getVoices = async (
+  options?: RequestInit,
+): Promise<VoicesResponse> => {
+  return customFetch<VoicesResponse>(getGetVoicesUrl(), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getGetVoicesQueryKey = () => {
+  return [`/api/tts/voices`] as const;
+};
+
+export const getGetVoicesQueryOptions = <
+  TData = Awaited<ReturnType<typeof getVoices>>,
+  TError = ErrorType<ErrorResponse>,
+>(options?: {
+  query?: UseQueryOptions<Awaited<ReturnType<typeof getVoices>>, TError, TData>;
+  request?: SecondParameter<typeof customFetch>;
+}) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getGetVoicesQueryKey();
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof getVoices>>> = ({
+    signal,
+  }) => getVoices({ signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof getVoices>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type GetVoicesQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getVoices>>
+>;
+export type GetVoicesQueryError = ErrorType<ErrorResponse>;
+
+/**
+ * @summary Get available voices
+ */
+
+export function useGetVoices<
+  TData = Awaited<ReturnType<typeof getVoices>>,
+  TError = ErrorType<ErrorResponse>,
+>(options?: {
+  query?: UseQueryOptions<Awaited<ReturnType<typeof getVoices>>, TError, TData>;
+  request?: SecondParameter<typeof customFetch>;
+}): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getGetVoicesQueryOptions(options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * Converts text to speech using ElevenLabs
+ * @summary Generate speech from text
+ */
+export const getGenerateSpeechUrl = () => {
+  return `/api/tts/generate`;
+};
+
+export const generateSpeech = async (
+  generateSpeechRequest: GenerateSpeechRequest,
+  options?: RequestInit,
+): Promise<Blob> => {
+  return customFetch<Blob>(getGenerateSpeechUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(generateSpeechRequest),
+  });
+};
+
+export const getGenerateSpeechMutationOptions = <
+  TError = ErrorType<ErrorResponse>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof generateSpeech>>,
+    TError,
+    { data: BodyType<GenerateSpeechRequest> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof generateSpeech>>,
+  TError,
+  { data: BodyType<GenerateSpeechRequest> },
+  TContext
+> => {
+  const mutationKey = ["generateSpeech"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof generateSpeech>>,
+    { data: BodyType<GenerateSpeechRequest> }
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return generateSpeech(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type GenerateSpeechMutationResult = NonNullable<
+  Awaited<ReturnType<typeof generateSpeech>>
+>;
+export type GenerateSpeechMutationBody = BodyType<GenerateSpeechRequest>;
+export type GenerateSpeechMutationError = ErrorType<ErrorResponse>;
+
+/**
+ * @summary Generate speech from text
+ */
+export const useGenerateSpeech = <
+  TError = ErrorType<ErrorResponse>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof generateSpeech>>,
+    TError,
+    { data: BodyType<GenerateSpeechRequest> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof generateSpeech>>,
+  TError,
+  { data: BodyType<GenerateSpeechRequest> },
+  TContext
+> => {
+  return useMutation(getGenerateSpeechMutationOptions(options));
+};

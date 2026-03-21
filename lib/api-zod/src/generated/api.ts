@@ -14,3 +14,29 @@ import * as zod from "zod";
 export const HealthCheckResponse = zod.object({
   status: zod.string(),
 });
+
+/**
+ * Returns list of available ElevenLabs voices
+ * @summary Get available voices
+ */
+export const GetVoicesResponse = zod.object({
+  voices: zod.array(
+    zod.object({
+      voice_id: zod.string(),
+      name: zod.string(),
+      category: zod.string(),
+    }),
+  ),
+});
+
+/**
+ * Converts text to speech using ElevenLabs
+ * @summary Generate speech from text
+ */
+export const generateSpeechBodyTextMax = 5000;
+
+export const GenerateSpeechBody = zod.object({
+  text: zod.string().min(1).max(generateSpeechBodyTextMax),
+  voice_id: zod.string(),
+  model_id: zod.string().optional(),
+});
