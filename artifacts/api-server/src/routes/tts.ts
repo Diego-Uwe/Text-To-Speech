@@ -28,13 +28,18 @@ router.get("/tts/voices", async (req, res) => {
     });
 
     if (!response.ok) {
-      req.log.warn({ status: response.status }, "ElevenLabs voices API unavailable, using defaults");
+      req.log.warn(
+        { status: response.status },
+        "ElevenLabs voices API unavailable, using defaults",
+      );
       const parsed = GetVoicesResponse.parse({ voices: DEFAULT_VOICES });
       res.json(parsed);
       return;
     }
 
-    const data = await response.json() as { voices: Array<{ voice_id: string; name: string; category?: string }> };
+    const data = (await response.json()) as {
+      voices: Array<{ voice_id: string; name: string; category?: string }>;
+    };
     const voices = data.voices.map((v) => ({
       voice_id: v.voice_id,
       name: v.name,
@@ -60,35 +65,43 @@ router.post("/tts/generate", async (req, res) => {
   const { text, voice_id, model_id } = parsed.data;
 
   try {
-    const response = await fetch(`${ELEVENLABS_BASE}/text-to-speech/${voice_id}`, {
-      method: "POST",
-      headers: {
-        "xi-api-key": ELEVENLABS_API_KEY ?? "",
-        "Content-Type": "application/json",
-        Accept: "audio/mpeg",
-      },
-      body: JSON.stringify({
-        text,
-        model_id: model_id ?? "eleven_turbo_v2_5",
-        voice_settings: {
-          stability: 0.5,
-          similarity_boost: 0.75,
+    const response = await fetch(
+      `${ELEVENLABS_BASE}/text-to-speech/${voice_id}`,
+      {
+        method: "POST",
+        headers: {
+          "xi-api-key": ELEVENLABS_API_KEY ?? "",
+          "Content-Type": "application/json",
+          Accept: "audio/mpeg",
         },
-      }),
-    });
+        body: JSON.stringify({
+          text,
+          model_id: model_id ?? "eleven_turbo_v2_5",
+          voice_settings: {
+            stability: 0.5,
+            similarity_boost: 0.75,
+          },
+        }),
+      },
+    );
 
     if (!response.ok) {
       const errorText = await response.text();
-      req.log.error({ status: response.status, body: errorText }, "ElevenLabs TTS error");
+      req.log.error(
+        { status: response.status, body: errorText },
+        "ElevenLabs TTS error",
+      );
 
       let userMessage = "Failed to generate speech. Please try again.";
       try {
         const errJson = JSON.parse(errorText);
         const code = errJson?.detail?.code ?? "";
         if (code === "paid_plan_required" || response.status === 402) {
-          userMessage = "Free accounts cannot use library voices via the API. Please use a voice you own — paste its Voice ID from your ElevenLabs dashboard.";
+          userMessage =
+            "Free accounts cannot use library voices via the API. Please use a voice you own — paste its Voice ID from your ElevenLabs dashboard.";
         } else if (response.status === 401) {
-          userMessage = "Invalid or missing ElevenLabs API key. Please check your key in Replit Secrets.";
+          userMessage =
+            "Invalid or missing ElevenLabs API key. Please check your key in Replit Secrets.";
         } else if (errJson?.detail?.message) {
           userMessage = errJson.detail.message;
         }
