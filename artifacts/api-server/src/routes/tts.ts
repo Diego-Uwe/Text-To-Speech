@@ -3,7 +3,7 @@ import { GenerateSpeechBody, GetVoicesResponse } from "@workspace/api-zod";
 
 const router: IRouter = Router();
 
-const ELEVENLABS_API_KEY = process.env.ELEVENLABS_API_KEY;
+const ELEVENLABS_API_KEY = import.meta.env.VITE_ELEVENLABS_API_KEY;
 const ELEVENLABS_BASE = "https://api.elevenlabs.io/v1";
 
 const DEFAULT_VOICES = [
