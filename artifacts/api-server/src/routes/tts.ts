@@ -4,7 +4,7 @@ import { GenerateSpeechBody, GetVoicesResponse } from "@workspace/api-zod";
 const router: IRouter = Router();
 
 // @ts-ignore
-const ELEVENLABS_API_KEY = (typeof process !== 'undefined' && process.env) ? process.env.VITE_ELEVENLABS_API_KEY : "";
+const ELEVENLABS_API_KEY: string = (process.env?.VITE_ELEVENLABS_API_KEY as string) || "";
 const ELEVENLABS_BASE = "https://api.elevenlabs.io/v1";
 
 const DEFAULT_VOICES = [
