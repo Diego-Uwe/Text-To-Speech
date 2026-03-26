@@ -131,4 +131,80 @@ router.post("/tts/generate", async (req, res) => {
   }
 });
 
+// Debug helper: returns ElevenLabs error metadata (code/message/status).
+// Useful to distinguish between invalid key vs free-plan/voice restrictions.
+router.post("/tts/generate/debug", async (req, res) => {
+  const parsed = GenerateSpeechBody.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: parsed.error.message });
+    return;
+  }
+
+  const { text, voice_id, model_id } = parsed.data;
+
+  try {
+    const response = await fetch(
+      `${ELEVENLABS_BASE}/text-to-speech/${voice_id}`,
+      {
+        method: "POST",
+        headers: {
+          "xi-api-key": ELEVENLABS_API_KEY,
+          "Content-Type": "application/json",
+          Accept: "audio/mpeg",
+        },
+        body: JSON.stringify({
+          text,
+          model_id: model_id ?? "eleven_turbo_v2_5",
+          voice_settings: {
+            stability: 0.5,
+            similarity_boost: 0.75,
+          },
+        }),
+      },
+    );
+
+    if (!response.ok) {
+      const errorText = await response.text();
+
+      let errJson: unknown = null;
+      try {
+        errJson = JSON.parse(errorText);
+      } catch {
+        // keep errJson as null
+      }
+
+      const detailCode = (errJson as any)?.detail?.code;
+      const detailMessage = (errJson as any)?.detail?.message;
+
+      let userMessage = "Failed to generate speech. Please try again.";
+      if (detailCode === "paid_plan_required" || response.status === 402) {
+        userMessage =
+          "Free accounts cannot use library voices via the API. Please use a voice you own — paste its Voice ID from your ElevenLabs dashboard.";
+      } else if (response.status === 401) {
+        userMessage =
+          "ElevenLabs rejected the request (401). Check key validity and whether this voice is allowed for your plan.";
+      } else if (detailMessage) {
+        userMessage = String(detailMessage);
+      }
+
+      res.status(500).json({
+        error: userMessage,
+        elevenlabs: {
+          status: response.status,
+          code: detailCode ?? null,
+          message: detailMessage ?? null,
+        },
+      });
+      return;
+    }
+
+    const audioBuffer = await response.arrayBuffer();
+    res.set("Content-Type", "audio/mpeg");
+    res.send(Buffer.from(audioBuffer));
+  } catch (err) {
+    req.log.error({ err }, "Failed to generate speech (debug)");
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
 export default router;
