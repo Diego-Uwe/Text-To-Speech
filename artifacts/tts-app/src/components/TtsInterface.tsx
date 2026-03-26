@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Mic, Play, Loader2, AlertCircle, Volume2, Download, Settings2, Info, ExternalLink, Key } from "lucide-react";
+import { Mic, Play, Loader2, AlertCircle, Volume2, Download, Settings2, Info, ExternalLink } from "lucide-react";
 import { useGenerateAudio } from "@/hooks/use-tts";
 
 const MAX_CHARS = 5000;
@@ -8,7 +8,6 @@ const MAX_CHARS = 5000;
 export function TtsInterface() {
   const [text, setText] = useState("");
   const [voiceId, setVoiceId] = useState<string>(() => localStorage.getItem("elevenlabs_voice_id") || "");
-  const [apiKey, setApiKey] = useState<string>(() => localStorage.getItem("elevenlabs_api_key") || "");
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
   const [showVoiceHelp, setShowVoiceHelp] = useState(false);
 
@@ -19,23 +18,19 @@ export function TtsInterface() {
   }, [voiceId]);
 
   useEffect(() => {
-    localStorage.setItem("elevenlabs_api_key", apiKey);
-  }, [apiKey]);
-
-  useEffect(() => {
     return () => {
       if (audioUrl) URL.revokeObjectURL(audioUrl);
     };
   }, [audioUrl]);
 
   const handleGenerate = () => {
-    if (!text.trim() || !voiceId.trim() || !apiKey.trim()) return;
+    if (!text.trim() || !voiceId.trim()) return;
     if (audioUrl) {
       URL.revokeObjectURL(audioUrl);
       setAudioUrl(null);
     }
     generateAudio.mutate(
-      { text, voice_id: voiceId.trim(), apiKey: apiKey.trim() },
+      { text, voice_id: voiceId.trim() },
       {
         onSuccess: (url) => setAudioUrl(url),
       }
@@ -47,7 +42,6 @@ export function TtsInterface() {
   const canGenerate =
     text.trim().length > 0 &&
     voiceId.trim().length > 0 &&
-    apiKey.trim().length > 0 &&
     !isOverLimit &&
     !generateAudio.isPending;
 
@@ -61,35 +55,6 @@ export function TtsInterface() {
   return (
     <div className="w-full max-w-4xl mx-auto space-y-4">
 
-      {/* API Key Card */}
-      <motion.div
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.3 }}
-        className="bg-card/80 backdrop-blur-xl border border-border/50 shadow-lg rounded-2xl overflow-hidden"
-      >
-        <div className="px-6 py-4 flex items-start justify-between gap-4">
-          <div className="flex items-start gap-3 min-w-0 flex-1">
-            <div className="p-2 bg-primary/10 text-primary rounded-lg mt-0.5 shrink-0">
-              <Key className="w-4 h-4" />
-            </div>
-            <div className="min-w-0 flex-1">
-              <h3 className="text-sm font-semibold text-foreground mb-1">ElevenLabs API Key</h3>
-              <input
-                type="password"
-                value={apiKey}
-                onChange={(e) => setApiKey(e.target.value)}
-                placeholder="Paste your ElevenLabs API key here"
-                className="w-full bg-secondary/30 border border-border/60 focus:border-primary/40 rounded-lg px-3 py-2 text-sm font-mono text-foreground placeholder:text-muted-foreground/50 outline-none transition-colors"
-              />
-              <p className="text-xs text-muted-foreground/60 mt-1">
-                Find it at <a href="https://elevenlabs.io/app/settings/api-keys" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">elevenlabs.io → Settings → API Keys</a>. Saved locally in your browser.
-              </p>
-            </div>
-          </div>
-        </div>
-      </motion.div>
-
       {/* Voice ID Setup Card */}
       <motion.div
         initial={{ opacity: 0, y: 10 }}
@@ -98,11 +63,11 @@ export function TtsInterface() {
         className="bg-card/80 backdrop-blur-xl border border-border/50 shadow-lg rounded-2xl overflow-hidden"
       >
         <div className="px-6 py-4 flex items-start justify-between gap-4">
-          <div className="flex items-start gap-3 min-w-0 flex-1">
+          <div className="flex items-start gap-3 min-w-0">
             <div className="p-2 bg-primary/10 text-primary rounded-lg mt-0.5 shrink-0">
               <Settings2 className="w-4 h-4" />
             </div>
-            <div className="min-w-0 flex-1">
+            <div className="min-w-0">
               <div className="flex items-center gap-2 mb-1">
                 <h3 className="text-sm font-semibold text-foreground">Your ElevenLabs Voice ID</h3>
                 <button
@@ -230,7 +195,7 @@ export function TtsInterface() {
                     </div>
                   </motion.div>
                 )}
-                {(!apiKey.trim() || !voiceId.trim()) && !generateAudio.isError && (
+                {!voiceId.trim() && !generateAudio.isError && (
                   <motion.p
                     key="hint"
                     initial={{ opacity: 0 }}
@@ -238,7 +203,7 @@ export function TtsInterface() {
                     exit={{ opacity: 0 }}
                     className="text-sm text-muted-foreground"
                   >
-                    {!apiKey.trim() ? "Enter your API key above to get started" : "Enter your Voice ID above to get started"}
+                    Enter your Voice ID above to get started
                   </motion.p>
                 )}
               </AnimatePresence>

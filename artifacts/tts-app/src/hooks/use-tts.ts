@@ -2,12 +2,11 @@ import { useMutation } from "@tanstack/react-query";
 
 export function useGenerateAudio() {
   return useMutation({
-    mutationFn: async ({ text, voice_id, apiKey }: { text: string; voice_id: string; apiKey: string }) => {
+    mutationFn: async ({ text, voice_id }: { text: string; voice_id: string }) => {
       const res = await fetch('/api/tts/generate', {
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json',
-          'x-elevenlabs-api-key': apiKey,
         },
         body: JSON.stringify({ text, voice_id })
       });
