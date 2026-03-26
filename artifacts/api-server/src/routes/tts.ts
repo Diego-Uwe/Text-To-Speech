@@ -6,6 +6,15 @@ const router: IRouter = Router();
 const ELEVENLABS_API_KEY = (process.env.ELEVENLABS_API_KEY || "").trim();
 const ELEVENLABS_BASE = "https://api.elevenlabs.io/v1";
 
+// Startup diagnostic — shows in server logs without exposing full key
+console.log(
+  `[TTS] API key status: ${
+    ELEVENLABS_API_KEY
+      ? `FOUND (${ELEVENLABS_API_KEY.length} chars, starts with "${ELEVENLABS_API_KEY.slice(0, 6)}")`
+      : "MISSING — ELEVENLABS_API_KEY env var is not set"
+  }`
+);
+
 const DEFAULT_VOICES = [
   { voice_id: "21m00Tcm4TlvDq8ikWAM", name: "Rachel", category: "premade" },
   { voice_id: "AZnzlk1XvdvUeBnXmlld", name: "Domi", category: "premade" },
