@@ -3,8 +3,7 @@ import { GenerateSpeechBody, GetVoicesResponse } from "@workspace/api-zod";
 
 const router: IRouter = Router();
 
-// @ts-ignore
-const ELEVENLABS_API_KEY = process.env.ELEVENLABS_API_KEY || "";
+const ELEVENLABS_SERVER_KEY = process.env.ELEVENLABS_API_KEY || "";
 const ELEVENLABS_BASE = "https://api.elevenlabs.io/v1";
 
 const DEFAULT_VOICES = [
@@ -64,6 +63,7 @@ router.post("/tts/generate", async (req, res) => {
   }
 
   const { text, voice_id, model_id } = parsed.data;
+  const apiKey = (req.headers["x-elevenlabs-api-key"] as string) || ELEVENLABS_SERVER_KEY;
 
   try {
     const response = await fetch(
@@ -71,7 +71,7 @@ router.post("/tts/generate", async (req, res) => {
       {
         method: "POST",
         headers: {
-          "xi-api-key": ELEVENLABS_API_KEY ?? "",
+          "xi-api-key": apiKey,
           "Content-Type": "application/json",
           Accept: "audio/mpeg",
         },
